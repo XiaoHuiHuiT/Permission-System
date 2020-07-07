@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jonathanlee.mapper.MenuMapper">
+
+    <resultMap id="BaseResultMap" type="Menu">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="text" property="text" jdbcType="VARCHAR"/>
+        <result column="url" property="url" jdbcType="VARCHAR"/>
+
+        <!--前缀的目的就是两个字段相同区分-->
+        <association property="parent" javaType="Menu" columnPrefix="m_">
+            <id property="id" column="id"/>
+            <result property="text" column="text"/>
+            <result property="url" column="url"/>
+        </association>
+
+        <!--封装权限-->
+        <association property="permission" javaType="Permission">
+            <id property="pid" column="pid"/>
+            <result property="pname" column="pname"/>
+            <result property="presource" column="presource"/>
+        </association>
+
+        <!--把根菜单的id给你   查询根菜单的子菜单-->
+        <collection property="children" ofType="Menu" select="listChildMenu" column="id"/>
+
+    </resultMap>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from menu
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+
+    <insert id="insert" parameterType="Menu">
+    insert into menu (id, text, url,parent_id)
+    values (#{id}, #{text}, #{url}, #{parentId})
+  </insert>
+
+    <!--保存菜单-->
+    <insert id="saveMenu">
+    INSERT INTO menu (text,url,parent_id)VALUES(#{text},#{url},#{parent.id});
+  </insert>
+    <update id="updateByPrimaryKey" parameterType="com.jonathanlee.domain.Menu">
+    update menu
+    set text = #{text},
+      url = #{url},
+      parent_id = #{parent.id}
+    where id = #{id}
+  </update>
+
+    <!--更新菜单关系-->
+    <update id="updateMenuRel">
+    UPDATE menu SET parent_id=null WHERE parent_id=#{id}
+  </update>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+    select id, text, url, parent_id
+    from menu
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+    <select id="selectAll" resultMap="BaseResultMap">
+    SELECT m1.id,m1.text,m1.url,
+    m2.id AS m_id,
+    m2.text AS m_text,
+    m2.url AS m_url
+    FROM menu AS m1
+    LEFT JOIN menu AS m2
+    ON m1.parent_id = m2.id
+    ORDER BY m1.id DESC
+  </select>
+    <select id="selectParentId" resultType="java.lang.Long">
+    SELECT parent_id FROM menu WHERE id=#{id}
+  </select>
+
+    <!--
+    获取树形菜单数据
+    1.分步查询  先查根菜单
+    2.根据根菜单的id  查询出子菜单
+    -->
+    <select id="getTreeData" resultMap="BaseResultMap">
+        SELECT *
+        FROM menu AS m
+        LEFT JOIN permission AS p
+        ON m.permission_id = p.pid
+        WHERE parent_id IS NULL
+    </select>
+
+    <!--根据父菜单的id    查询该父菜单的子菜单-->
+    <select id="listChildMenu" resultMap="BaseResultMap">
+        SELECT *
+        FROM menu AS m
+        LEFT JOIN permission AS p
+        ON m.permission_id = p.pid
+        WHERE parent_id=#{id}
+    </select>
+</mapper>

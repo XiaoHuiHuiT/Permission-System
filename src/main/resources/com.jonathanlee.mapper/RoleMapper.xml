@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jonathanlee.mapper.RoleMapper" >
+  <resultMap id="BaseResultMap" type="com.jonathanlee.domain.Role" >
+    <id column="rid" property="rid" jdbcType="BIGINT" />
+    <result column="rnum" property="rnum" jdbcType="VARCHAR" />
+    <result column="rname" property="rname" jdbcType="VARCHAR" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long" >
+    delete from role
+    where rid = #{rid,jdbcType=BIGINT}
+  </delete>
+
+  <!--打破角色与权限之间的关系-->
+  <delete id="deletePermissionRel">
+    DELETE FROM `role_permission_rel` WHERE rid=#{rid}
+  </delete>
+  <insert id="insert" parameterType="com.jonathanlee.domain.Role" useGeneratedKeys="true" keyProperty="rid">
+    insert into role (rid, rnum, rname
+      )
+    values (#{rid,jdbcType=BIGINT}, #{rnum,jdbcType=VARCHAR}, #{rname,jdbcType=VARCHAR}
+      )
+  </insert>
+
+  <!--保存角色与权限之间的关系-->
+  <insert id="insertRoleAndPermissionRel">
+    INSERT INTO `role_permission_rel`(rid,pid) VALUES(#{rid},#{pid})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.jonathanlee.domain.Role" >
+    update role
+    set rnum = #{rnum,jdbcType=VARCHAR},
+      rname = #{rname,jdbcType=VARCHAR}
+    where rid = #{rid,jdbcType=BIGINT}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+    select rid, rnum, rname
+    from role
+    where rid = #{rid,jdbcType=BIGINT}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap" >
+    select rid, rnum, rname
+    from role
+  </select>
+
+  <!--根据员工id 查询对应的角色-->
+  <select id="getRoleWithId" resultType="java.lang.Long">
+    SELECT rid FROM employee_role_rel WHERE eid = #{id}
+  </select>
+</mapper>
